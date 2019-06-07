@@ -27,6 +27,9 @@
 #include <xf86drm.h>
 #include <xf86drmMode.h>
 
+#include <tbm_surface.h>
+#include <tbm_surface_queue.h>
+
 struct gbm;
 struct egl;
 
@@ -62,8 +65,11 @@ struct drm {
 	drmModeModeInfo *mode;
 	uint32_t crtc_id;
 	uint32_t connector_id;
-
+#ifndef TIZEN
 	int (*run)(const struct gbm *gbm, const struct egl *egl);
+#else
+	int (*run)(const es_context_t *gbm, const struct egl *egl);
+#endif
 };
 
 struct drm_fb {

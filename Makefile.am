@@ -28,10 +28,11 @@ kmscube_LDADD = \
 	$(GBM_LIBS) \
 	$(EGL_LIBS) \
 	$(GLES2_LIBS) \
-	-lm
+	-lm -ltbm
 
 kmscube_CFLAGS = \
 	-O0 -g \
+	-DTIZEN \
 	-Wall -Wextra \
 	-std=c99 \
 	$(DRM_CFLAGS) \
@@ -43,8 +44,6 @@ kmscube_SOURCES = \
 	common.c \
 	common.h \
 	cube-smooth.c \
-	cube-tex.c \
-	drm-atomic.c \
 	drm-common.c \
 	drm-common.h \
 	drm-legacy.c \

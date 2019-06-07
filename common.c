@@ -30,7 +30,7 @@
 #include <string.h>
 
 #include "common.h"
-
+#ifndef TIZEN
 static struct gbm gbm;
 
 WEAK struct gbm_surface *
@@ -74,6 +74,7 @@ const struct gbm * init_gbm(int drm_fd, int w, int h, uint64_t modifier)
 
 	return &gbm;
 }
+#endif
 
 static bool has_ext(const char *extension_list, const char *ext)
 {
@@ -161,7 +162,11 @@ out:
 	return true;
 }
 
+#ifndef TIZEN
 int init_egl(struct egl *egl, const struct gbm *gbm, int samples)
+#else
+int init_egl(struct egl *egl, const es_context_t *gbm, int samples)
+#endif
 {
 	EGLint major, minor;
 
@@ -199,12 +204,16 @@ int init_egl(struct egl *egl, const struct gbm *gbm, int samples)
 	egl_exts_client = eglQueryString(EGL_NO_DISPLAY, EGL_EXTENSIONS);
 	get_proc_client(EGL_EXT_platform_base, eglGetPlatformDisplayEXT);
 
+#ifndef TIZEN
 	if (egl->eglGetPlatformDisplayEXT) {
 		egl->display = egl->eglGetPlatformDisplayEXT(EGL_PLATFORM_GBM_KHR,
 				gbm->dev, NULL);
 	} else {
 		egl->display = eglGetDisplay((void *)gbm->dev);
 	}
+#else
+	egl->display = eglGetDisplay((void *)gbm->bufmgr);
+#endif
 
 	if (!eglInitialize(egl->display, &major, &minor)) {
 		printf("failed to initialize\n");
@@ -252,8 +261,13 @@ int init_egl(struct egl *egl, const struct gbm *gbm, int samples)
 		return -1;
 	}
 
+#ifndef TIZEN
 	egl->surface = eglCreateWindowSurface(egl->display, egl->config,
 			(EGLNativeWindowType)gbm->surface, NULL);
+#else
+	egl->surface = eglCreateWindowSurface(egl->display, egl->config,
+			(EGLNativeWindowType)gbm->hWnd, NULL);
+#endif
 	if (egl->surface == EGL_NO_SURFACE) {
 		printf("failed to create egl surface\n");
 		return -1;

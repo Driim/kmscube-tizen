@@ -36,7 +36,7 @@ m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 
 # Obtain compiler/linker options for depedencies
 PKG_CHECK_MODULES(DRM, [libdrm >= 2.4.71])
-PKG_CHECK_MODULES(GBM, gbm >= 13.0)
+#PKG_CHECK_MODULES(GBM, gbm >= 13.0)
 PKG_CHECK_MODULES(EGL, egl)
 PKG_CHECK_MODULES(GLES2, glesv2)
 

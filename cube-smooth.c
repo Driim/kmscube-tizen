@@ -217,8 +217,11 @@ static void draw_cube_smooth(unsigned i)
 	glDrawArrays(GL_TRIANGLE_STRIP, 16, 4);
 	glDrawArrays(GL_TRIANGLE_STRIP, 20, 4);
 }
-
+#ifndef TIZEN
 const struct egl * init_cube_smooth(const struct gbm *gbm, int samples)
+#else
+const struct egl * init_cube_smooth(const es_context_t *gbm, int samples)
+#endif
 {
 	int ret;
 

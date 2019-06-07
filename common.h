@@ -28,10 +28,15 @@
 #include <GLES2/gl2ext.h>
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
-
+#ifndef TIZEN
 #include <gbm.h>
+#else
+#include <tbm_bufmgr.h>
+#endif
 #include <drm_fourcc.h>
 #include <stdbool.h>
+
+#define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
 
 #ifndef DRM_FORMAT_MOD_LINEAR
 #define DRM_FORMAT_MOD_LINEAR 0
@@ -82,9 +87,9 @@ struct gbm {
 	uint32_t format;
 	int width, height;
 };
-
+#ifndef TIZEN
 const struct gbm * init_gbm(int drm_fd, int w, int h, uint64_t modifier);
-
+#endif
 
 struct egl {
 	EGLDisplay display;
@@ -107,6 +112,25 @@ struct egl {
 	void (*draw)(unsigned i);
 };
 
+#ifdef TIZEN
+typedef struct _escontext_t
+{
+	 uint32_t format;
+
+	 int fd;
+	 
+	 tbm_bufmgr bufmgr;
+   /// Window width
+   GLint       width;
+
+   /// Window height
+   GLint       height;
+
+   /// Window handle
+   EGLNativeWindowType  hWnd;
+} es_context_t;
+#endif
+
 static inline int __egl_check(void *ptr, const char *name)
 {
 	if (!ptr) {
@@ -118,7 +142,11 @@ static inline int __egl_check(void *ptr, const char *name)
 
 #define egl_check(egl, name) __egl_check((egl)->name, #name)
 
+#ifndef TIZEN
 int init_egl(struct egl *egl, const struct gbm *gbm, int samples);
+#else
+int init_egl(struct egl *egl, const es_context_t *gbm, int samples);
+#endif
 int create_program(const char *vs_src, const char *fs_src);
 int link_program(unsigned program);
 
@@ -130,7 +158,12 @@ enum mode {
 	VIDEO,         /* video textured cube */
 };
 
+#ifndef TIZEN
 const struct egl * init_cube_smooth(const struct gbm *gbm, int samples);
+#else
+const struct egl * init_cube_smooth(const es_context_t *gbm, int samples);
+#endif
+
 const struct egl * init_cube_tex(const struct gbm *gbm, enum mode mode, int samples);
 
 #ifdef HAVE_GST

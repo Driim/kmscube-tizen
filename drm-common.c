@@ -31,6 +31,7 @@
 #include "common.h"
 #include "drm-common.h"
 
+#ifndef TIZEN
 WEAK uint64_t
 gbm_bo_get_modifier(struct gbm_bo *bo);
 
@@ -119,6 +120,8 @@ struct drm_fb * drm_fb_get_from_bo(struct gbm_bo *bo)
 	return fb;
 }
 
+#endif
+
 static uint32_t find_crtc_for_encoder(const drmModeRes *resources,
 		const drmModeEncoder *encoder) {
 	int i;
@@ -165,7 +168,7 @@ int init_drm(struct drm *drm, const char *device)
 	drmModeRes *resources;
 	drmModeConnector *connector = NULL;
 	drmModeEncoder *encoder = NULL;
-	int i, area;
+	int i, area, ret;
 
 	drm->fd = open(device, O_RDWR);
 
@@ -173,6 +176,10 @@ int init_drm(struct drm *drm, const char *device)
 		printf("could not open drm device\n");
 		return -1;
 	}
+
+	ret = drmSetMaster(drm->fd);
+	if(ret)
+		printf("Unable to set master %s", strerror(errno));
 
 	resources = drmModeGetResources(drm->fd);
 	if (!resources) {

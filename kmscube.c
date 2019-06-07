@@ -40,7 +40,12 @@ GST_DEBUG_CATEGORY(kmscube_debug);
 #define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
 
 static const struct egl *egl;
+#ifndef TIZEN
 static const struct gbm *gbm;
+#else
+static es_context_t gbm;
+#include <tbm_log.h>
+#endif
 static const struct drm *drm;
 
 static const char *shortopts = "AD:M:m:V:";
@@ -126,7 +131,7 @@ int main(int argc, char *argv[])
 			return -1;
 		}
 	}
-
+#ifndef TIZEN
 	if (atomic)
 		drm = init_drm_atomic(device);
 	else
@@ -143,6 +148,7 @@ int main(int argc, char *argv[])
 		return -1;
 	}
 
+
 	if (mode == SMOOTH)
 		egl = init_cube_smooth(gbm, samples);
 	else if (mode == VIDEO)
@@ -154,10 +160,51 @@ int main(int argc, char *argv[])
 		printf("failed to initialize EGL\n");
 		return -1;
 	}
+#else
+	drm = init_drm_legacy(device);
+        if (!drm) {
+                printf("failed to initialize %s DRM\n", atomic ? "atomic" : "legacy");
+                return -1;
+        }
+
+	tbm_surface_queue_h tbm_surf;
+
+	gbm.bufmgr = tbm_bufmgr_init(drm->fd);
+	if (!gbm.bufmgr) {
+		printf("tbm_bufmgr_init fail\n");
+		return -1;
+	}
+
+	tbm_log_set_debug_level(4);
+
+	gbm.fd = drm->fd;
+
+	gbm.width = drm->mode->hdisplay;
+	gbm.height = drm->mode->vdisplay;
+	gbm.format = TBM_FORMAT_XRGB8888;
+
+	tbm_surf = tbm_surface_queue_create(3, gbm.width, gbm.height,
+	                                    gbm.format, TBM_BO_SCANOUT);
+	if (!tbm_surf) {
+		printf("Failed to create tbm_surface.\n");
+		return -1;
+	}
+
+	gbm.hWnd = (EGLNativeWindowType)tbm_surf;
+
+	egl = init_cube_smooth(&gbm, samples);
+	if (!egl) {
+		printf("failed to initialize EGL\n");
+		return -1;
+	}
+#endif
 
 	/* clear the color buffer */
 	glClearColor(0.5, 0.5, 0.5, 1.0);
 	glClear(GL_COLOR_BUFFER_BIT);
-
+#ifndef TIZEN
 	return drm->run(gbm, egl);
+#else
+	return drm->run(&gbm, egl);
+#endif
 }
